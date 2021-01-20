@@ -71,11 +71,11 @@ def file_trans_np(file_path,sel):
     if sel == 'lab':
         struct.unpack('>2i',f.read(8))
     if sys.platform == "linux":
-        fb = BufferedReader.read(f)
+        f = BufferedReader.read(f)
         if sel == 'img':
-            rs = np.frombuffer(fb,dtype=np.uint8).reshape(-1,28*28)
+            rs = np.frombuffer(f,dtype=np.uint8).reshape(-1,28*28)
         if sel == 'lab':
-            rs = np.frombuffer(fb,dtype=np.uint8)
+            rs = np.frombuffer(f,dtype=np.uint8)
     else:
         if sel == 'img':
             rs = np.fromfile(f,dtype=np.uint8).reshape(-1,28*28)
