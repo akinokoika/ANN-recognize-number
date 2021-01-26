@@ -172,5 +172,5 @@ for i in range(train_num//batch_size):
 valid_accuracy(parameters)
 
 x = np.random.randint(test_num)
-print(predict(test_img[x],parameters).argmax())
+print("predict : {}".format(predict(test_img[x],parameters).argmax()))
 show_img(x,'test')
