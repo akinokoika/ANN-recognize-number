@@ -5,6 +5,7 @@ import struct
 from io import BufferedReader
 from matplotlib import pyplot as plt
 import copy
+from tqdm import tqdm
 
 train_img_path = './mnist/train-images.idx3-ubyte'
 train_label_path = './mnist/train-labels.idx1-ubyte'
@@ -19,7 +20,7 @@ def file_trans_np(file_path,sel):
     with open(file_path,'rb') as f:
         if sel == 'img':
             struct.unpack('>4i',f.read(16))
-            rs = np.fromfile(f,dtype = np.uint8).reshape(-1,28*28)
+            rs = np.fromfile(f,dtype = np.uint8).reshape(-1,28*28)/255
         if sel == 'lab':
             struct.unpack('>2i',f.read(8))
             rs = np.fromfile(f,dtype = np.uint8)
@@ -131,15 +132,24 @@ def grad_parameters(img,lab,parameters):
 
     return {'b0':grad_b0,'b1':grad_b1,'w1':grad_w1}
 
-def valid_loss(parameters):
+def loss(parameters,types):
     loss_accu = 0
-    for img_i in range(valid_num):
-        loss_accu += sqr_loss(valid_img[img_i],valid_lab[img_i],parameters)
+    if types == "valid":
+        for img_i in range(valid_num):
+            loss_accu += sqr_loss(valid_img[img_i],valid_lab[img_i],parameters)
+        loss_accu = loss_accu/(valid_num/10000)
+    if types == "train":
+        for img_i in range(train_num):
+            loss_accu += sqr_loss(train_img[img_i],train_lab[img_i],parameters)
+        loss_accu = loss_accu/(train_num/10000)
     return loss_accu
-    
-def valid_accuracy(parameters):
-    correct = [predict(valid_img[img_i],parameters).argmax() == valid_lab[img_i] for img_i in range(valid_num)]
-    print("valid accuracy : {}".format(correct.count(True)/len(correct)))
+
+def accuracy(parameters,types):
+    if types == "valid":
+        correct = [predict(valid_img[img_i],parameters).argmax() == valid_lab[img_i] for img_i in range(valid_num)]
+    if types == "train":
+        correct = [predict(train_img[img_i],parameters).argmax() == train_lab[img_i] for img_i in range(train_num)]
+    return correct.count(True)/len(correct)
 
 batch_size = 100
 
@@ -160,17 +170,49 @@ def combine_parameters(parameters,grad,learn_rate):
     parameters_tmp[1]['w'] -= learn_rate*grad['w1']
     return parameters_tmp
 
-learn_rate = 1
-parameters = init_parameters()
-valid_accuracy(parameters)
+def learn_rate_show(parameters,lower=0,upper=1,step=0.1,batch=np.random.randint(train_num//batch_size)):
+    grad_lr = train_batch(batch,parameters)
+    lr_list = []
+    for learn_rate in tqdm(np.linspace(lower,upper,num=int((upper-lower)/step+1))):
+        parameters_tmp = combine_parameters(parameters,grad_lr,learn_rate)
+        loss_tmp = loss(parameters_tmp,"train")
+        lr_list.append([learn_rate,loss_tmp])
+    lr_list = np.array(lr_list)
+    plt.plot(lr_list[:,0],lr_list[:,1],color = "deepskyblue")
+    plt.show()
 
-for i in range(train_num//batch_size):
-    if i % 100 == 99:
-        print("batch : {}/{}".format(i+1,train_num//batch_size))
-    grad_tmp = train_batch(i,parameters)
-    parameters = combine_parameters(parameters,grad_tmp,learn_rate)
-valid_accuracy(parameters)
+parameters = init_parameters()
+print(accuracy(parameters,"valid"))
+
+train_loss_list = []
+train_accu_list = []
+valid_loss_list = []
+valid_accu_list = []
+
+learn_rate = 0.6
+epoch_num = 5
+for epoch in tqdm(range(epoch_num)):
+    for i in tqdm(range(train_num//batch_size)):
+        grad_tmp = train_batch(i,parameters)
+        parameters = combine_parameters(parameters,grad_tmp,learn_rate)
+    
+    train_loss_list.append(loss(parameters,"train"))
+    train_accu_list.append(accuracy(parameters,"train"))
+    valid_loss_list.append(loss(parameters,"valid"))
+    valid_accu_list.append(accuracy(parameters,"valid"))
+
+print(accuracy(parameters,"valid"))
 
 x = np.random.randint(test_num)
 print("predict : {}".format(predict(test_img[x],parameters).argmax()))
 show_img(x,'test')
+
+lower = 0
+plt.title("loss list")
+plt.plot(train_loss_list[lower:],color = "black", label="train")
+plt.plot(valid_loss_list[lower:],color = "red", label="valid")
+plt.show()
+plt.title("accu list")
+plt.plot(train_accu_list[lower:],color = "black", label="train")
+plt.plot(valid_accu_list[lower:],color = "red", label="valid")
+plt.show()
