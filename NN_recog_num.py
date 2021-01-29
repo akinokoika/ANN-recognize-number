@@ -33,7 +33,7 @@ valid_lab = file_trans_np(train_label_path,'lab')[train_num:]
 test_img = file_trans_np(test_img_path,'img')
 test_lab = file_trans_np(test_label_path,'lab')
 
-def show_img(index,types):
+def show_img(index,types,predict_value=None):
     if types == 'train':
         img = train_img[index].reshape(28,28)
         lab = train_lab[index]
@@ -43,7 +43,7 @@ def show_img(index,types):
     if types == 'test':
         img = test_img[index].reshape(28,28)
         lab = test_lab[index]
-    plt.title(f"label : {str(lab)}")
+    plt.title(f"label : {str(lab)}  predict : {predict_value}")
     plt.imshow(img,cmap="gray")
     plt.show()
 #show_img(np.random.randint(train_num),'train')
@@ -153,23 +153,19 @@ def grad_parameters(img,lab,parameters):
         d_layer = np.dot(parameters[layer]['w'],d_layer)
 
     return grad_result
-'''
-parameters = init_parameters()
-grad_list = []
-h = 0.001
-layer = 1
-pname = 'w'
-for i in tqdm(range(len(parameters[layer][pname]))):
-    for j in range(len(parameters[layer][pname][0])):
-        img_i = np.random.randint(train_num)
-        test_parameters = init_parameters()
-        derivative = grad_parameters(train_img[img_i],train_lab[img_i],test_parameters)[layer][pname]
-        value1 = sqr_loss(train_img[img_i],train_lab[img_i],test_parameters)
-        test_parameters[layer][pname][i][j]+=h
-        value2 = sqr_loss(train_img[img_i],train_lab[img_i],test_parameters)
-        grad_list.append(derivative[i][j]-(value2-value1)/h)
-print(np.abs(grad_list).max())
-'''
+
+def grad_test(parameters,layer,pname,h):
+    grad_list = []
+    for i in tqdm(range(len(parameters[layer][pname]))):
+        for j in range(len(parameters[layer][pname][0])):
+            img_i = np.random.randint(train_num)
+            test_parameters = init_parameters()
+            derivative = grad_parameters(train_img[img_i],train_lab[img_i],test_parameters)[layer][pname]
+            value1 = sqr_loss(train_img[img_i],train_lab[img_i],test_parameters)
+            test_parameters[layer][pname][i][j]+=h
+            value2 = sqr_loss(train_img[img_i],train_lab[img_i],test_parameters)
+            grad_list.append(derivative[i][j]-(value2-value1)/h)
+    print(np.abs(grad_list).max())
 
 def loss(parameters,types):
     loss_accu = 0
@@ -229,38 +225,50 @@ def learn_rate_show(parameters,lower=0,upper=1,step=0.1,batch=np.random.randint(
     plt.plot(lr_list[:,0],lr_list[:,1],color = "deepskyblue")
     plt.show()
 
+def statistics_show(img_list:list,color_list:list,title,lower=0):
+    plt.title(title)
+    for i in range(len(img_list)):
+        plt.plot(img_list[i][lower:],color = color_list[i])
+    plt.show()
+
+def statistics_count(parameters,statistics_list):
+    for key in statistics_list:
+        statistics_list[key]["loss"].append(loss(parameters,key))
+        statistics_list[key]["accu"].append(accuracy(parameters,key))
+    return statistics_list
+
+def train(parameters,learn_rate,epoch_num,statistics=False):
+    statistics_list = {"train":{"loss":[],"accu":[]},"valid":{"loss":[],"accu":[]}}
+
+    for epoch in tqdm(range(epoch_num)):
+        for i in tqdm(range(train_num//batch_size)):
+            grad_tmp = train_batch(i,parameters)
+            parameters = combine_parameters(parameters,grad_tmp,learn_rate)
+
+        if statistics == True:
+            statistics_list = statistics_count(parameters,statistics_list)
+    if statistics == True:
+        statistics_show([statistics_list["train"]["loss"],statistics_list["valid"]["loss"]],["black","red"],"loss")
+        statistics_show([statistics_list["train"]["accu"],statistics_list["valid"]["accu"]],["black","red"],"accu")
+
+    return parameters
+
+def predict_show(count,img_type=test_img,img_num=test_num):
+    test_list = np.random.choice(range(0,img_num),count,replace=False)
+    for i in test_list:
+        print("predict : {}".format(predict(img_type[i],parameters).argmax()))
+        show_img(i,'test',predict(img_type[i],parameters).argmax())
+
 parameters = init_parameters()
 print(accuracy(parameters,"valid"))
 
-train_loss_list = []
-train_accu_list = []
-valid_loss_list = []
-valid_accu_list = []
-
 learn_rate = 0.6
-epoch_num = 5
-for epoch in tqdm(range(epoch_num)):
-    for i in tqdm(range(train_num//batch_size)):
-        grad_tmp = train_batch(i,parameters)
-        parameters = combine_parameters(parameters,grad_tmp,learn_rate)
-    
-    train_loss_list.append(loss(parameters,"train"))
-    train_accu_list.append(accuracy(parameters,"train"))
-    valid_loss_list.append(loss(parameters,"valid"))
-    valid_accu_list.append(accuracy(parameters,"valid"))
+epoch_num = 1
+
+parameters = train(parameters,learn_rate,epoch_num)
 
 print(accuracy(parameters,"valid"))
 
-x = np.random.randint(test_num)
-print("predict : {}".format(predict(test_img[x],parameters).argmax()))
-show_img(x,'test')
+predict_show(5)
 
-lower = 0
-plt.title("loss list")
-plt.plot(train_loss_list[lower:],color = "black", label="train")
-plt.plot(valid_loss_list[lower:],color = "red", label="valid")
-plt.show()
-plt.title("accu list")
-plt.plot(train_accu_list[lower:],color = "black", label="train")
-plt.plot(valid_accu_list[lower:],color = "red", label="valid")
-plt.show()
+print(accuracy(parameters,"test"))
