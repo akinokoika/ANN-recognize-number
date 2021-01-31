@@ -192,7 +192,7 @@ def loss(parameters,types):
         loss_accu = loss_accu/(valid_num/10000)
     return loss_accu
 
-# 测试模型正确率
+# 测试模型准确率
 def accuracy(parameters,types):
     if types == "train":
         correct = [predict(train_img[img_i],parameters).argmax() == train_lab[img_i] for img_i in range(train_num)]
@@ -296,7 +296,7 @@ epoch_num = 1
 # 训练
 parameters = train(parameters,learn_rate,epoch_num)
 
-# 正确率测试
+# 准确率测试
 print(accuracy(parameters,"valid"))
 
 predict_show(parameters,5)
