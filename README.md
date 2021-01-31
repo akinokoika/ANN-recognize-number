@@ -1,4 +1,4 @@
-# ANN识别手写数字mnist数据集
+# ANN-recognize-number
 #### ANN recognize handwritten number
 #### Hello world of machine learning
 
