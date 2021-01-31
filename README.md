@@ -16,5 +16,5 @@ batch_size = 100
 learn_rate = 0.6 
 epoch_num = 100
 parameters = train(parameters,learn_rate,epoch_num)
-print(accuracy(parameters,"test")) # 0.9785
+accuracy(parameters,"test") # 0.9785
 ```
