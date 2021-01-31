@@ -8,6 +8,11 @@
 - parameters_0.9785 是学习率0.6训练100个epoch的模型文件，使用测试数据集的正确率：97.85%
 
 ```py
+dimensions = [28*28,100,10]
+activation = [bypass,tanh,softmax]
+train_num = 50000
+batch_size = 100
+
 learn_rate = 0.6 
 epoch_num = 100
 parameters = train(parameters,learn_rate,epoch_num)
