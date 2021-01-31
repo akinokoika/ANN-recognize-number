@@ -5,7 +5,7 @@
 - ANN_recog_num 是带中文注释的主要版本
 - ANN_recog_num_gui 是使用dearpygui的GUI版本
 - NN_recog_num 是无隐藏层的原始版本
-- parameters_0.9785 是学习率0.6训练100个epoch的模型文件，使用测试数据集的正确率：97.85%
+- parameters_0.9785 是学习率0.6训练100个epoch的模型文件，使用测试数据集的准确率：97.85%
 
 ```py
 dimensions = [28*28,100,10]
