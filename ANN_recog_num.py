@@ -241,6 +241,7 @@ def train(parameters,learn_rate,epoch_num,statistics=False):
     statistics_list = {"train":{"loss":[],"accu":[]},"valid":{"loss":[],"accu":[]}}
 
     for epoch in tqdm(range(epoch_num)):
+
         for i in tqdm(range(train_num//batch_size)):
             grad_tmp = train_batch(i,parameters)
             parameters = combine_parameters(parameters,grad_tmp,learn_rate)
@@ -263,7 +264,7 @@ parameters = init_parameters()
 print(accuracy(parameters,"valid"))
 
 learn_rate = 0.6
-epoch_num = 1
+epoch_num = 100
 
 parameters = train(parameters,learn_rate,epoch_num)
 
@@ -272,3 +273,5 @@ print(accuracy(parameters,"valid"))
 predict_show(parameters,5)
 
 print(accuracy(parameters,"test"))
+
+#np.save("parameters.npy",parameters)
