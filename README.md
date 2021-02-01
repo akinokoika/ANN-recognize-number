@@ -1,6 +1,6 @@
 # ANN-recognize-number
 #### ANN recognize handwritten number
-#### Hello world of machine learning
+#### Hello world of deep learning
 
 - ANN_recog_num 是带中文注释的主要版本
 - ANN_recog_num_gui 是使用dearpygui的GUI版本
